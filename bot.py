@@ -17,12 +17,14 @@ REFERRAL_LINK = "https://www.lbank.com/en-US/login/?icode=TRADELAND"
 REFERRAL_CODE = "TRADELAND"
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyDy6yfvPImhq27f6v2GVM2lOg4MgchNyug")
 
+# آیدی عددی تلگرام تو (ادمین) - باید پر بشه
+ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))
+
 # ========== مراحل ==========
 WAITING_PROOF = 1
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 # ========== بررسی عضویت ==========
 async def is_member(bot, user_id):
@@ -32,63 +34,46 @@ async def is_member(bot, user_id):
     except:
         return False
 
+# ========== ارسال به ادمین برای تایید ==========
+async def send_to_admin(context, user, proof_type, file_id=None, text=None):
+    if ADMIN_ID == 0:
+        return False
 
-# ========== تایید با Gemini ==========
-async def verify_with_gemini(image_data: bytes = None, uid_text: str = None) -> tuple[bool, str]:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
-
-    if image_data:
-        b64 = base64.b64encode(image_data).decode()
-        parts = [
-            {
-                "inline_data": {
-                    "mime_type": "image/jpeg",
-                    "data": b64
-                }
-            },
-            {
-                "text": f"""این اسکرین‌شات را بررسی کن:
-1. آیا مربوط به صرافی LBank است؟
-2. آیا نشان می‌دهد کاربر ثبت‌نام کرده یا وارد شده؟
-3. آیا کد رفرال '{REFERRAL_CODE}' یا نشانه‌ای از ثبت‌نام با رفرال دیده می‌شود؟
-
-فقط با JSON پاسخ بده (بدون کد بلاک):
-{{"valid": true یا false, "reason": "دلیل به فارسی"}}"""
-            }
+    keyboard = [
+        [
+            InlineKeyboardButton("✅ تایید", callback_data=f"approve_{user.id}"),
+            InlineKeyboardButton("❌ رد", callback_data=f"reject_{user.id}")
         ]
-    else:
-        parts = [
-            {
-                "text": f"""کاربر این متن را برای تایید ثبت‌نام در LBank ارسال کرده: "{uid_text}"
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
-بررسی کن:
-- آیا این یک UID عددی معتبر LBank به نظر می‌رسد؟ (معمولاً ۸ تا ۱۲ رقم)
-- یا آیا اطلاعات ثبت‌نام معتبری است؟
-
-فقط با JSON پاسخ بده (بدون کد بلاک):
-{{"valid": true یا false, "reason": "دلیل به فارسی"}}"""
-            }
-        ]
-
-    payload = {
-        "contents": [{"parts": parts}],
-        "generationConfig": {"temperature": 0.1, "maxOutputTokens": 200}
-    }
+    caption = (
+        f"🔔 درخواست عضویت جدید!\n\n"
+        f"👤 نام: {user.full_name}\n"
+        f"🆔 یوزرنیم: @{user.username or 'ندارد'}\n"
+        f"🔢 آیدی: {user.id}\n"
+        f"📋 نوع مدرک: {proof_type}\n\n"
+        f"تایید یا رد کن:"
+    )
 
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            r = await client.post(url, json=payload)
-            data = r.json()
-            text = data["candidates"][0]["content"]["parts"][0]["text"]
-            text = text.replace("```json", "").replace("```", "").strip()
-            match = re.search(r'\{.*\}', text, re.DOTALL)
-            if match:
-                result = json.loads(match.group())
-                return result.get("valid", False), result.get("reason", "")
+        if file_id and proof_type == "اسکرین‌شات":
+            await context.bot.send_photo(
+                chat_id=ADMIN_ID,
+                photo=file_id,
+                caption=caption,
+                reply_markup=reply_markup
+            )
+        else:
+            await context.bot.send_message(
+                chat_id=ADMIN_ID,
+                text=caption + f"\n\n📝 متن ارسالی: {text}",
+                reply_markup=reply_markup
+            )
+        return True
     except Exception as e:
-        logger.error(f"Gemini error: {e}")
-
-    return False, "خطا در بررسی. لطفاً دوباره امتحان کن."
+        logger.error(f"Error sending to admin: {e}")
+        return False
 
 
 # ========== هندلرها ==========
@@ -146,70 +131,109 @@ async def handle_proof(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     msg = update.message
 
-    await msg.reply_text("⏳ در حال بررسی... لطفاً چند ثانیه صبر کن")
-
-    valid = False
-    reason = ""
+    sent = False
 
     if msg.photo:
-        photo = msg.photo[-1]
-        file = await context.bot.get_file(photo.file_id)
-        image_data = await file.download_as_bytearray()
-        valid, reason = await verify_with_gemini(image_data=bytes(image_data))
-
+        file_id = msg.photo[-1].file_id
+        sent = await send_to_admin(context, user, "اسکرین‌شات", file_id=file_id)
     elif msg.document and msg.document.mime_type and msg.document.mime_type.startswith("image/"):
-        file = await context.bot.get_file(msg.document.file_id)
-        image_data = await file.download_as_bytearray()
-        valid, reason = await verify_with_gemini(image_data=bytes(image_data))
-
+        file_id = msg.document.file_id
+        sent = await send_to_admin(context, user, "اسکرین‌شات", file_id=file_id)
     elif msg.text:
-        valid, reason = await verify_with_gemini(uid_text=msg.text.strip())
-
+        sent = await send_to_admin(context, user, "UID/متن", text=msg.text.strip())
     else:
         await msg.reply_text("❌ لطفاً اسکرین‌شات یا UID ارسال کن.")
         return WAITING_PROOF
 
-    if valid:
+    if sent:
+        await msg.reply_text(
+            "⏳ مدرک شما دریافت شد!\n\n"
+            "در حال بررسی توسط ادمین هستید.\n"
+            "معمولاً در کمتر از ۲۴ ساعت نتیجه اعلام می‌شود. 🙏"
+        )
+    else:
+        await msg.reply_text(
+            "❌ خطا در ارسال. لطفاً دوباره امتحان کن."
+        )
+
+    return ConversationHandler.END
+
+
+async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    if update.effective_user.id != ADMIN_ID:
+        await query.answer("❌ شما ادمین نیستید!", show_alert=True)
+        return
+
+    data = query.data
+    action, target_user_id = data.split("_", 1)
+    target_user_id = int(target_user_id)
+
+    if action == "approve":
         try:
             invite = await context.bot.create_chat_invite_link(
                 CHANNEL_ID,
                 member_limit=1,
-                name=f"user_{user.id}"
+                name=f"user_{target_user_id}"
             )
-            await msg.reply_text(
-                f"🎉 تبریک {user.first_name}!\n\n"
-                f"✅ ثبت‌نام تایید شد!\n\n"
-                f"━━━━━━━━━━━━━━━━━━\n"
-                f"👇 لینک ورود به کانال VIP:\n"
-                f"{invite.invite_link}\n"
-                f"━━━━━━━━━━━━━━━━━━\n\n"
-                f"⚠️ این لینک فقط یک‌بار قابل استفاده است!\n"
-                f"موفق باشی! 🚀"
+            await context.bot.send_message(
+                chat_id=target_user_id,
+                text=(
+                    f"🎉 تبریک!\n\n"
+                    f"✅ ثبت‌نام شما تایید شد!\n\n"
+                    f"━━━━━━━━━━━━━━━━━━\n"
+                    f"👇 لینک ورود به کانال VIP:\n"
+                    f"{invite.invite_link}\n"
+                    f"━━━━━━━━━━━━━━━━━━\n\n"
+                    f"⚠️ این لینک فقط یک‌بار قابل استفاده است!\n"
+                    f"موفق باشی! 🚀"
+                )
             )
-            return ConversationHandler.END
+            await query.edit_message_caption(
+                caption=query.message.caption + "\n\n✅ تایید شد و لینک ارسال شد!",
+                reply_markup=None
+            ) if query.message.caption else await query.edit_message_text(
+                text=query.message.text + "\n\n✅ تایید شد و لینک ارسال شد!",
+                reply_markup=None
+            )
         except Exception as e:
-            logger.error(f"Invite error: {e}")
-            await msg.reply_text("❌ خطا در ساخت لینک. لطفاً با ادمین تماس بگیر.")
-            return ConversationHandler.END
-    else:
-        await msg.reply_text(
-            f"❌ تایید نشد!\n\n"
-            f"دلیل: {reason}\n\n"
-            f"━━━━━━━━━━━━━━━━━━\n"
-            f"لطفاً:\n"
-            f"• اسکرین‌شات واضح‌تری بفرست\n"
-            f"• یا UID حسابت رو بنویس\n"
-            f"• یا از لینک رفرال دوباره ثبت‌نام کن"
-        )
-        return WAITING_PROOF
+            logger.error(f"Approve error: {e}")
+            await query.answer("❌ خطا در ارسال لینک!", show_alert=True)
+
+    elif action == "reject":
+        try:
+            await context.bot.send_message(
+                chat_id=target_user_id,
+                text=(
+                    "❌ متاسفانه ثبت‌نام شما تایید نشد.\n\n"
+                    "لطفاً مطمئن شو که:\n"
+                    "• از لینک رفرال ما ثبت‌نام کردی\n"
+                    "• اسکرین‌شات واضح باشه\n\n"
+                    "دوباره امتحان کن: /start"
+                )
+            )
+            await query.edit_message_caption(
+                caption=query.message.caption + "\n\n❌ رد شد.",
+                reply_markup=None
+            ) if query.message.caption else await query.edit_message_text(
+                text=query.message.text + "\n\n❌ رد شد.",
+                reply_markup=None
+            )
+        except Exception as e:
+            logger.error(f"Reject error: {e}")
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "❌ عملیات لغو شد.\n\n"
-        "برای شروع مجدد /start بزن."
+        "❌ عملیات لغو شد.\n\nبرای شروع مجدد /start بزن."
     )
     return ConversationHandler.END
+
+
+async def get_my_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(f"🆔 آیدی شما: `{update.effective_user.id}`", parse_mode="Markdown")
 
 
 # ========== اجرا ==========
@@ -234,6 +258,8 @@ def main():
     )
 
     app.add_handler(conv_handler)
+    app.add_handler(CallbackQueryHandler(admin_callback, pattern="^(approve|reject)_"))
+    app.add_handler(CommandHandler("myid", get_my_id))
 
     logger.info("✅ TRADEMANVIP Bot started!")
     app.run_polling(drop_pending_updates=True)
