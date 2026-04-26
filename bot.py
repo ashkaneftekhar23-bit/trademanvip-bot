@@ -108,10 +108,7 @@ async def verify_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
 
     await query.edit_message_text(
-        "📤 لطفاً بعد از ثبت‌نام:\n\n"
-        "📸 اسکرین‌شات پروفایل یا داشبورد خود را بفرستید\n\n"
-        "و یا\n\n"
-        "🚨 UID: شناسه حساب خود را بفرستید"
+        "📤 لطفاً بعد از ثبت‌نام، کد شناسه (UID) پروفایل حساب کاربری خود را برای ما بفرستید"
     )
     return WAITING_PROOF
 
