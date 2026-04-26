@@ -11,6 +11,7 @@ BOT_TOKEN = "8647319022:AAEy5L1A9g2vGp0gFlXW0FDqrvQAdfG_vR0"
 CHANNEL_ID = -1002180889746
 REFERRAL_LINK = "https://www.lbank.com/en-US/login/?icode=TRADELAND"
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "7274125873"))
+INVITE_LINK = "https://t.me/+BLcOh-oRGtI3ZGJk"
 
 WAITING_PROOF = 1
 
@@ -26,19 +27,9 @@ async def is_member(bot, user_id):
         return False
 
 
-INVITE_LINK = "https://t.me/+BLcOh-oRGtI3ZGJk"
-
-async def create_invite(context):
-    try:
-    return INVITE_LINK
-
-
 async def send_to_admin(context, user, proof_type, file_id=None, text=None):
-    # ساخت لینک دعوت از قبل
-    invite_link = await create_invite(context)
-
     keyboard = [[
-        InlineKeyboardButton("✅ تایید و ارسال لینک", callback_data=f"approve_{user.id}_{invite_link}"),
+        InlineKeyboardButton("✅ تایید", callback_data=f"approve_{user.id}"),
         InlineKeyboardButton("❌ رد", callback_data=f"reject_{user.id}")
     ]]
     markup = InlineKeyboardMarkup(keyboard)
@@ -48,8 +39,7 @@ async def send_to_admin(context, user, proof_type, file_id=None, text=None):
         f"👤 نام: {user.full_name}\n"
         f"🆔 یوزرنیم: @{user.username or 'ندارد'}\n"
         f"🔢 آیدی: {user.id}\n"
-        f"📋 نوع: {proof_type}\n\n"
-        f"🔗 لینک دعوت آماده شده:\n{invite_link}"
+        f"📋 نوع: {proof_type}"
     )
 
     try:
@@ -153,28 +143,10 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await query.answer()
     data = query.data
+    target_user_id = int(data.split("_")[1])
 
     if data.startswith("approve_"):
-        # فرمت: approve_userid_invitelink
-        parts = data.split("_", 2)
-        target_user_id = int(parts[1])
-        invite_link = parts[2] if len(parts) > 2 else None
-
-        if not invite_link:
-            invite_link = await create_invite(context)
-
-        # ارسال لینک به ادمین (کپی کنه و بفرسته)
-        await context.bot.send_message(
-            chat_id=ADMIN_ID,
-            text=(
-                f"✅ تایید شد!\n\n"
-                f"🔗 لینک کانال برای کاربر {target_user_id}:\n"
-                f"{invite_link}\n\n"
-                f"این لینک رو برای کاربر بفرست یا forward کن."
-            )
-        )
-
-        # سعی کن مستقیم هم بفرسته
+        # ارسال لینک به کاربر
         try:
             await context.bot.send_message(
                 chat_id=target_user_id,
@@ -183,16 +155,22 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"✅ ثبت‌نام شما تایید شد!\n\n"
                     f"━━━━━━━━━━━━━━━━━━\n"
                     f"👇 لینک ورود به کانال VIP:\n"
-                    f"{invite_link}\n"
+                    f"{INVITE_LINK}\n"
                     f"━━━━━━━━━━━━━━━━━━\n\n"
-                    f"⚠️ این لینک فقط یک‌بار قابل استفاده است!\n"
                     f"موفق باشی! 🚀"
                 )
             )
         except Exception as e:
-            logger.error(f"Direct send error: {e}")
+            logger.error(f"Send error: {e}")
+            # اگه نشد، لینک رو به ادمین بفرست
+            await context.bot.send_message(
+                chat_id=ADMIN_ID,
+                text=(
+                    f"⚠️ نتونستم به کاربر پیام بدم!\n"
+                    f"لینک رو خودت بفرست:\n{INVITE_LINK}"
+                )
+            )
 
-        # آپدیت پیام ادمین
         try:
             if query.message.photo:
                 await query.edit_message_caption(
@@ -208,8 +186,6 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             pass
 
     elif data.startswith("reject_"):
-        target_user_id = int(data.split("_")[1])
-
         try:
             await context.bot.send_message(
                 chat_id=target_user_id,
@@ -222,11 +198,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
             )
         except Exception as e:
-            logger.error(f"Reject send error: {e}")
-            await context.bot.send_message(
-                chat_id=ADMIN_ID,
-                text=f"⚠️ نتونستم به کاربر پیام بدم. کاربر باید اول /start بزنه."
-            )
+            logger.error(f"Reject error: {e}")
 
         try:
             if query.message.photo:
