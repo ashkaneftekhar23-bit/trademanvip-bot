@@ -11,7 +11,7 @@ BOT_TOKEN = "8647319022:AAEy5L1A9g2vGp0gFlXW0FDqrvQAdfG_vR0"
 CHANNEL_ID = -1002180889746
 REFERRAL_LINK = "https://www.lbank.com/en-US/login/?icode=TRADELAND"
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "7274125873"))
-INVITE_LINK = "https://t.me/+BLcOh-oRGtI3ZGJk"
+INVITE_LINK = "https://t.me/+xM84o_i6j-pmODkx"
 
 WAITING_PROOF = 1
 
