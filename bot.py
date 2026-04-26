@@ -26,16 +26,11 @@ async def is_member(bot, user_id):
         return False
 
 
+INVITE_LINK = "https://t.me/+BLcOh-oRGtI3ZGJk"
+
 async def create_invite(context):
     try:
-        invite = await context.bot.create_chat_invite_link(
-            CHANNEL_ID,
-            member_limit=1
-        )
-        return invite.invite_link
-    except Exception as e:
-        logger.error(f"Invite error: {e}")
-        return None
+    return INVITE_LINK
 
 
 async def send_to_admin(context, user, proof_type, file_id=None, text=None):
