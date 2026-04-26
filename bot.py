@@ -108,12 +108,11 @@ async def verify_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
  
     await query.edit_message_text(
-        f"📤 لطفاً بعد از ثبت‌نام:\n\n"
-        f"📸 اسکرین‌شات پروفایل یا داشبورد {LTR}LBank\n\n"
-        f"و یا\n\n"
-        f"🚨 {LTR}UID{LTR} حساب {LTR}LBank{LTR} خود را بفرستید\n\n"
-        f"برای لغو /cancel را بنویس"
-    )
+    f"📤 لطفاً بعد از ثبت‌نام:\n\n"
+    f"📸 اسکرین‌شات پروفایل یا داشبورد {LTR}LBank\n\n"
+    f"و یا\n\n"
+    f"🚨 حساب {LTR}LBank{LTR} خود را بفرستید {LTR}UID"
+)
     return WAITING_PROOF
  
  
