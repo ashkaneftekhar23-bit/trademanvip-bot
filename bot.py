@@ -92,6 +92,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"✅ در صرافی {LTR}LBank ثبت‌نام کنید\n\n"
         f"✅ به همین صفحه برگردید و دکمه \" ثبت‌نام کردم! \" را بزنید\n"
         f"━━━━━━━━━━━━━━━━━━\n\n"
+        f"⚡️ کل این پروسه کمتر از ۳ دقیقه طول می‌کشه!\n\n"
         f"💎 بعد از تایید، لینک کانال {LTR}TradeMan برای شما ارسال می‌شود!",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
@@ -107,11 +108,11 @@ async def verify_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
 
     await query.edit_message_text(
-        "📤 لطفاً یکی از موارد زیر را ارسال کن:\n\n"
-        "📸 اسکرین‌شات پروفایل یا داشبورد LBank\n\n"
-        "یا\n\n"
-        "🔢 UID حساب LBank خود را بنویس\n\n"
-        "برای لغو /cancel را بنویس"
+        f"📤 لطفاً بعد از ثبت‌نام:\n\n"
+        f"📸 اسکرین‌شات پروفایل یا داشبورد {LTR}LBank\n\n"
+        f"و یا\n\n"
+        f"🚨 {LTR}UID حساب {LTR}LBank خود را بفرستید\n\n"
+        f"برای لغو /cancel را بنویس"
     )
     return WAITING_PROOF
 
