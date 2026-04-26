@@ -26,9 +26,24 @@ async def is_member(bot, user_id):
         return False
 
 
+async def create_invite(context):
+    try:
+        invite = await context.bot.create_chat_invite_link(
+            CHANNEL_ID,
+            member_limit=1
+        )
+        return invite.invite_link
+    except Exception as e:
+        logger.error(f"Invite error: {e}")
+        return None
+
+
 async def send_to_admin(context, user, proof_type, file_id=None, text=None):
+    # ساخت لینک دعوت از قبل
+    invite_link = await create_invite(context)
+
     keyboard = [[
-        InlineKeyboardButton("✅ تایید", callback_data=f"approve_{user.id}"),
+        InlineKeyboardButton("✅ تایید و ارسال لینک", callback_data=f"approve_{user.id}_{invite_link}"),
         InlineKeyboardButton("❌ رد", callback_data=f"reject_{user.id}")
     ]]
     markup = InlineKeyboardMarkup(keyboard)
@@ -38,7 +53,8 @@ async def send_to_admin(context, user, proof_type, file_id=None, text=None):
         f"👤 نام: {user.full_name}\n"
         f"🆔 یوزرنیم: @{user.username or 'ندارد'}\n"
         f"🔢 آیدی: {user.id}\n"
-        f"📋 نوع: {proof_type}"
+        f"📋 نوع: {proof_type}\n\n"
+        f"🔗 لینک دعوت آماده شده:\n{invite_link}"
     )
 
     try:
@@ -141,18 +157,30 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await query.answer()
+    data = query.data
 
-    parts = query.data.split("_", 1)
-    action = parts[0]
-    target_user_id = int(parts[1])
+    if data.startswith("approve_"):
+        # فرمت: approve_userid_invitelink
+        parts = data.split("_", 2)
+        target_user_id = int(parts[1])
+        invite_link = parts[2] if len(parts) > 2 else None
 
-    if action == "approve":
-        try:
-            invite = await context.bot.create_chat_invite_link(
-                CHANNEL_ID,
-                member_limit=1,
-                name=f"user_{target_user_id}"
+        if not invite_link:
+            invite_link = await create_invite(context)
+
+        # ارسال لینک به ادمین (کپی کنه و بفرسته)
+        await context.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=(
+                f"✅ تایید شد!\n\n"
+                f"🔗 لینک کانال برای کاربر {target_user_id}:\n"
+                f"{invite_link}\n\n"
+                f"این لینک رو برای کاربر بفرست یا forward کن."
             )
+        )
+
+        # سعی کن مستقیم هم بفرسته
+        try:
             await context.bot.send_message(
                 chat_id=target_user_id,
                 text=(
@@ -160,32 +188,33 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"✅ ثبت‌نام شما تایید شد!\n\n"
                     f"━━━━━━━━━━━━━━━━━━\n"
                     f"👇 لینک ورود به کانال VIP:\n"
-                    f"{invite.invite_link}\n"
+                    f"{invite_link}\n"
                     f"━━━━━━━━━━━━━━━━━━\n\n"
                     f"⚠️ این لینک فقط یک‌بار قابل استفاده است!\n"
                     f"موفق باشی! 🚀"
                 )
             )
-            # آپدیت پیام ادمین
-            try:
-                if query.message.photo:
-                    await query.edit_message_caption(
-                        caption=(query.message.caption or "") + "\n\n✅ تایید شد!",
-                        reply_markup=None
-                    )
-                else:
-                    await query.edit_message_text(
-                        text=(query.message.text or "") + "\n\n✅ تایید شد!",
-                        reply_markup=None
-                    )
-            except:
-                pass
-
         except Exception as e:
-            logger.error(f"Approve error: {e}")
-            await context.bot.send_message(chat_id=ADMIN_ID, text=f"❌ خطا در تایید: {e}")
+            logger.error(f"Direct send error: {e}")
 
-    elif action == "reject":
+        # آپدیت پیام ادمین
+        try:
+            if query.message.photo:
+                await query.edit_message_caption(
+                    caption=(query.message.caption or "") + "\n\n✅ تایید شد!",
+                    reply_markup=None
+                )
+            else:
+                await query.edit_message_text(
+                    text=(query.message.text or "") + "\n\n✅ تایید شد!",
+                    reply_markup=None
+                )
+        except:
+            pass
+
+    elif data.startswith("reject_"):
+        target_user_id = int(data.split("_")[1])
+
         try:
             await context.bot.send_message(
                 chat_id=target_user_id,
@@ -197,22 +226,26 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     "دوباره امتحان کن: /start"
                 )
             )
-            try:
-                if query.message.photo:
-                    await query.edit_message_caption(
-                        caption=(query.message.caption or "") + "\n\n❌ رد شد.",
-                        reply_markup=None
-                    )
-                else:
-                    await query.edit_message_text(
-                        text=(query.message.text or "") + "\n\n❌ رد شد.",
-                        reply_markup=None
-                    )
-            except:
-                pass
-
         except Exception as e:
-            logger.error(f"Reject error: {e}")
+            logger.error(f"Reject send error: {e}")
+            await context.bot.send_message(
+                chat_id=ADMIN_ID,
+                text=f"⚠️ نتونستم به کاربر پیام بدم. کاربر باید اول /start بزنه."
+            )
+
+        try:
+            if query.message.photo:
+                await query.edit_message_caption(
+                    caption=(query.message.caption or "") + "\n\n❌ رد شد.",
+                    reply_markup=None
+                )
+            else:
+                await query.edit_message_text(
+                    text=(query.message.text or "") + "\n\n❌ رد شد.",
+                    reply_markup=None
+                )
+        except:
+            pass
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
