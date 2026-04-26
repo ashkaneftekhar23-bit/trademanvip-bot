@@ -197,12 +197,12 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 chat_id=target_user_id,
                 text=(
                     "❌ متاسفانه ثبت‌نام شما تایید نشد.\n\n"
-                    "لطفاً مطمئن شوید که از لینک رفرال ما در LBank ثبت‌نام کرده‌اید\n\n"
+                    "لطفاً مطمئن شوید که از لینک رفرال ما در LBank ثبت‌نام کرده‌اید و از دکمه شروع مجدد استفاده کنید\n\n"
                     "در صورت نیاز به راهنمایی، از دکمه پشتیبانی کمک بگیرید 👇"
                 ),
                 reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("🔄 شروع مجدد", callback_data="restart")],
-                    [InlineKeyboardButton("💬 پشتیبانی", url="https://t.me/ashkaneftekhar")]
+                    [InlineKeyboardButton("🔄 شروع مجدد", url="https://t.me/trademanvipbot?start=start")],
+                    [InlineKeyboardButton("💬 پشتیبانی", url="tg://user?id=7274125873")]
                 ])
             )
         except Exception as e:
