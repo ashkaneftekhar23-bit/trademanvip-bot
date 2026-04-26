@@ -111,7 +111,7 @@ async def verify_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"📤 لطفاً بعد از ثبت‌نام:\n\n"
         f"📸 اسکرین‌شات پروفایل یا داشبورد {LTR}LBank\n\n"
         f"و یا\n\n"
-        f"🚨 {LTR}UID حساب {LTR}LBank خود را بفرستید\n\n"
+        f"🚨 {LTR}UID{LTR} حساب {LTR}LBank{LTR} خود را بفرستید\n\n"
         f"برای لغو /cancel را بنویس"
     )
     return WAITING_PROOF
