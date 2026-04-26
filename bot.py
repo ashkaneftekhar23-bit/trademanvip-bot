@@ -108,7 +108,10 @@ async def verify_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
 
     await query.edit_message_text(
-        "📤 لطفاً بعد از ثبت‌نام، کد شناسه (UID) حساب کاربری خود را برای ما بفرستید"
+        "📤 لطفاً بعد از ثبت‌نام:\n\n"
+        "📸 اسکرین‌شات پروفایل یا داشبورد خود را بفرستید\n\n"
+        "و یا\n\n"
+        "🚨 UID: شناسه حساب خود را بفرستید"
     )
     return WAITING_PROOF
 
@@ -130,9 +133,8 @@ async def handle_proof(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if sent:
         await msg.reply_text(
-            "⏳ مدرک شما دریافت شد!\n\n"
-            "در حال بررسی توسط ادمین هستید.\n"
-            "معمولاً در کمتر از ۲۴ ساعت نتیجه اعلام می‌شود. 🙏"
+            "✅ درخواست شما ثبت شد و در حال بررسی می‌باشد\n\n"
+            "⏱ معمولاً در کمتر از ۱ ساعت نتیجه اعلام خواهد شد"
         )
     else:
         await msg.reply_text("❌ خطا در ارسال. لطفاً دوباره امتحان کن.")
@@ -157,12 +159,15 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 chat_id=target_user_id,
                 text=(
                     f"🎉 تبریک!\n\n"
-                    f"✅ ثبت‌نام شما تایید شد!\n\n"
+                    f"✅ ثبت‌نام شما تایید شد!\n"
                     f"━━━━━━━━━━━━━━━━━━\n"
-                    f"👇 لینک ورود به کانال {LTR}TradeMan:\n"
-                    f"{INVITE_LINK}\n"
-                    f"━━━━━━━━━━━━━━━━━━\n\n"
-                    f"موفق باشی! 🚀"
+                    f"🏆 به TradeMan خوش آمدید!\n\n"
+                    f"📊 توی این کانال هر روز با هم ترید می‌کنیم و موقعیت‌های طلایی بازار رو شکار می‌کنیم 🦇\n\n"
+                    f"⚠️ بلافاصله بعد از ورود، پیام‌های پین شده را مطالعه کنید ⚠️\n"
+                    f"━━━━━━━━━━━━━━━━━━\n"
+                    f"👇 از طریق لینک زیر وارد شوید:\n\n"
+                    f"{INVITE_LINK}\n\n"
+                    f"موفق و پرسود باشید 🚀"
                 )
             )
         except Exception as e:
@@ -192,11 +197,13 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 chat_id=target_user_id,
                 text=(
                     "❌ متاسفانه ثبت‌نام شما تایید نشد.\n\n"
-                    "لطفاً مطمئن شو که:\n"
-                    f"• از لینک رفرال ما در {LTR}LBank ثبت‌نام کردی\n"
-                    "• اسکرین‌شات واضح باشه\n\n"
-                    "دوباره امتحان کن: /start"
-                )
+                    "لطفاً مطمئن شوید که از لینک رفرال ما در LBank ثبت‌نام کرده‌اید\n\n"
+                    "در صورت نیاز به راهنمایی، از دکمه پشتیبانی کمک بگیرید 👇"
+                ),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("🔄 شروع مجدد", callback_data="restart")],
+                    [InlineKeyboardButton("💬 پشتیبانی", url="https://t.me/ashkaneftekhar")]
+                ])
             )
         except Exception as e:
             logger.error(f"Reject error: {e}")
@@ -214,6 +221,12 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
         except:
             pass
+
+
+async def restart_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await start(update, context)
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -243,6 +256,7 @@ def main():
 
     app.add_handler(conv_handler)
     app.add_handler(CallbackQueryHandler(admin_callback, pattern="^(approve|reject)_"))
+    app.add_handler(CallbackQueryHandler(restart_handler, pattern="^restart$"))
 
     logger.info("✅ TRADEMANVIP Bot started!")
     app.run_polling(drop_pending_updates=True)
