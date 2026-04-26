@@ -11,7 +11,8 @@ BOT_TOKEN = "8647319022:AAEy5L1A9g2vGp0gFlXW0FDqrvQAdfG_vR0"
 CHANNEL_ID = -1002180889746
 REFERRAL_LINK = "https://www.lbank.com/en-US/login/?icode=TRADELAND"
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "7274125873"))
-INVITE_LINK = "https://t.me/+BLcOh-oRGtI3ZGJk"
+INVITE_LINK = "https://t.me/+xM84o_i6j-pmODkx"
+LTR = "\u200e"
 
 WAITING_PROOF = 1
 
@@ -66,24 +67,32 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
 
     if await is_member(context.bot, user.id):
-        await update.message.reply_text(f"✅ سلام {user.first_name}!\nشما عضو کانال TRADEMANVIP هستید. 🚀")
+        await update.message.reply_text(
+            f"✅ سلام {user.first_name}!\n"
+            f"شما عضو کانال {LTR}TradeMan هستید. 🚀"
+        )
         return ConversationHandler.END
 
     keyboard = [
-        [InlineKeyboardButton("📝 ثبت‌نام در LBank", url=REFERRAL_LINK)],
+        [InlineKeyboardButton(f"📝 ثبت‌نام در LBank", url=REFERRAL_LINK)],
         [InlineKeyboardButton("✅ ثبت‌نام کردم!", callback_data="verify")]
     ]
 
     await update.message.reply_text(
-        f"👋 سلام {user.first_name}!\n\n"
-        f"🎯 به ربات ‎TRADEMANVIP‎ خوش آمدید!\n\n"
+        f"👋 سلام {user.first_name}\n\n"
+        f"🎯 به ربات {LTR}TRADEMANVIP خوش آمدید!\n\n"
         f"━━━━━━━━━━━━━━━━━━\n"
-        f"برای عضویت در کانال ‎VIP:\n\n"
-        f"1️⃣ روی دکمه زیر کلیک کن\n"
-        f"2️⃣ در صرافی ‎LBank‎ ثبت‌نام کن\n"
-        f"3️⃣ برگرد و دکمه تایید رو بزن\n"
+        f"🏆 مزایای کانال {LTR}TradeMan:\n\n"
+        f"📊 سیگنال‌های روزانه\n"
+        f"📈 تحلیل بازارهای کریپتو، طلا و دلار\n"
+        f"🎓 آموزش‌های کاملاً رایگان\n"
+        f"━━━━━━━━━━━━━━━━━━\n"
+        f"برای عضویت:\n\n"
+        f"✅ روی \" ثبت‌نام در {LTR}LBank \" کلیک کنید\n\n"
+        f"✅ در صرافی {LTR}LBank ثبت‌نام کنید\n\n"
+        f"✅ به همین صفحه برگردید و دکمه \" ثبت‌نام کردم! \" را بزنید\n"
         f"━━━━━━━━━━━━━━━━━━\n\n"
-        f"⚠️ حتماً از لینک زیر ثبت‌نام کن!",
+        f"💎 بعد از تایید، لینک کانال {LTR}TradeMan برای شما ارسال می‌شود!",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
     return ConversationHandler.END
@@ -146,7 +155,6 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     target_user_id = int(data.split("_")[1])
 
     if data.startswith("approve_"):
-        # ارسال لینک به کاربر
         try:
             await context.bot.send_message(
                 chat_id=target_user_id,
@@ -154,7 +162,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"🎉 تبریک!\n\n"
                     f"✅ ثبت‌نام شما تایید شد!\n\n"
                     f"━━━━━━━━━━━━━━━━━━\n"
-                    f"👇 لینک ورود به کانال VIP:\n"
+                    f"👇 لینک ورود به کانال {LTR}TradeMan:\n"
                     f"{INVITE_LINK}\n"
                     f"━━━━━━━━━━━━━━━━━━\n\n"
                     f"موفق باشی! 🚀"
@@ -162,13 +170,9 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         except Exception as e:
             logger.error(f"Send error: {e}")
-            # اگه نشد، لینک رو به ادمین بفرست
             await context.bot.send_message(
                 chat_id=ADMIN_ID,
-                text=(
-                    f"⚠️ نتونستم به کاربر پیام بدم!\n"
-                    f"لینک رو خودت بفرست:\n{INVITE_LINK}"
-                )
+                text=f"⚠️ نتونستم به کاربر پیام بدم!\nلینک رو خودت بفرست:\n{INVITE_LINK}"
             )
 
         try:
@@ -192,7 +196,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 text=(
                     "❌ متاسفانه ثبت‌نام شما تایید نشد.\n\n"
                     "لطفاً مطمئن شو که:\n"
-                    "• از لینک رفرال ما ثبت‌نام کردی\n"
+                    f"• از لینک رفرال ما در {LTR}LBank ثبت‌نام کردی\n"
                     "• اسکرین‌شات واضح باشه\n\n"
                     "دوباره امتحان کن: /start"
                 )
