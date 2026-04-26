@@ -1,9 +1,5 @@
 import os
 import logging
-import base64
-import json
-import re
-import httpx
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, CommandHandler, MessageHandler,
@@ -14,19 +10,14 @@ from telegram.ext import (
 BOT_TOKEN = "8647319022:AAEy5L1A9g2vGp0gFlXW0FDqrvQAdfG_vR0"
 CHANNEL_ID = -1002180889746
 REFERRAL_LINK = "https://www.lbank.com/en-US/login/?icode=TRADELAND"
-REFERRAL_CODE = "TRADELAND"
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyDy6yfvPImhq27f6v2GVM2lOg4MgchNyug")
+ADMIN_ID = int(os.environ.get("ADMIN_ID", "7274125873"))
 
-# آیدی عددی تلگرام تو (ادمین) - باید پر بشه
-ADMIN_ID = int(os.environ.get("ADMIN_ID", "0"))
-
-# ========== مراحل ==========
 WAITING_PROOF = 1
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ========== بررسی عضویت ==========
+
 async def is_member(bot, user_id):
     try:
         member = await bot.get_chat_member(CHANNEL_ID, user_id)
@@ -34,64 +25,52 @@ async def is_member(bot, user_id):
     except:
         return False
 
-# ========== ارسال به ادمین برای تایید ==========
+
 async def send_to_admin(context, user, proof_type, file_id=None, text=None):
-    if ADMIN_ID == 0:
-        return False
+    keyboard = [[
+        InlineKeyboardButton("✅ تایید", callback_data=f"approve_{user.id}"),
+        InlineKeyboardButton("❌ رد", callback_data=f"reject_{user.id}")
+    ]]
+    markup = InlineKeyboardMarkup(keyboard)
 
-    keyboard = [
-        [
-            InlineKeyboardButton("✅ تایید", callback_data=f"approve_{user.id}"),
-            InlineKeyboardButton("❌ رد", callback_data=f"reject_{user.id}")
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    caption = (
+    info = (
         f"🔔 درخواست عضویت جدید!\n\n"
         f"👤 نام: {user.full_name}\n"
         f"🆔 یوزرنیم: @{user.username or 'ندارد'}\n"
         f"🔢 آیدی: {user.id}\n"
-        f"📋 نوع مدرک: {proof_type}\n\n"
-        f"تایید یا رد کن:"
+        f"📋 نوع: {proof_type}"
     )
 
     try:
-        if file_id and proof_type == "اسکرین‌شات":
+        if file_id:
             await context.bot.send_photo(
                 chat_id=ADMIN_ID,
                 photo=file_id,
-                caption=caption,
-                reply_markup=reply_markup
+                caption=info,
+                reply_markup=markup
             )
         else:
             await context.bot.send_message(
                 chat_id=ADMIN_ID,
-                text=caption + f"\n\n📝 متن ارسالی: {text}",
-                reply_markup=reply_markup
+                text=info + f"\n\n📝 متن: {text}",
+                reply_markup=markup
             )
         return True
     except Exception as e:
-        logger.error(f"Error sending to admin: {e}")
+        logger.error(f"Send to admin error: {e}")
         return False
 
-
-# ========== هندلرها ==========
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
 
     if await is_member(context.bot, user.id):
-        await update.message.reply_text(
-            f"✅ سلام {user.first_name}!\n\n"
-            f"شما قبلاً عضو کانال TRADEMANVIP هستید.\n\n"
-            f"موفق باشید! 🚀"
-        )
+        await update.message.reply_text(f"✅ سلام {user.first_name}!\nشما عضو کانال TRADEMANVIP هستید. 🚀")
         return ConversationHandler.END
 
     keyboard = [
         [InlineKeyboardButton("📝 ثبت‌نام در LBank", url=REFERRAL_LINK)],
-        [InlineKeyboardButton("✅ ثبت‌نام کردم، تاییدم کن!", callback_data="verify")]
+        [InlineKeyboardButton("✅ ثبت‌نام کردم!", callback_data="verify")]
     ]
 
     await update.message.reply_text(
@@ -130,15 +109,12 @@ async def verify_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_proof(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     msg = update.message
-
     sent = False
 
     if msg.photo:
-        file_id = msg.photo[-1].file_id
-        sent = await send_to_admin(context, user, "اسکرین‌شات", file_id=file_id)
+        sent = await send_to_admin(context, user, "اسکرین‌شات", file_id=msg.photo[-1].file_id)
     elif msg.document and msg.document.mime_type and msg.document.mime_type.startswith("image/"):
-        file_id = msg.document.file_id
-        sent = await send_to_admin(context, user, "اسکرین‌شات", file_id=file_id)
+        sent = await send_to_admin(context, user, "اسکرین‌شات", file_id=msg.document.file_id)
     elif msg.text:
         sent = await send_to_admin(context, user, "UID/متن", text=msg.text.strip())
     else:
@@ -152,24 +128,23 @@ async def handle_proof(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "معمولاً در کمتر از ۲۴ ساعت نتیجه اعلام می‌شود. 🙏"
         )
     else:
-        await msg.reply_text(
-            "❌ خطا در ارسال. لطفاً دوباره امتحان کن."
-        )
+        await msg.reply_text("❌ خطا در ارسال. لطفاً دوباره امتحان کن.")
 
     return ConversationHandler.END
 
 
 async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()
 
     if update.effective_user.id != ADMIN_ID:
         await query.answer("❌ شما ادمین نیستید!", show_alert=True)
         return
 
-    data = query.data
-    action, target_user_id = data.split("_", 1)
-    target_user_id = int(target_user_id)
+    await query.answer()
+
+    parts = query.data.split("_", 1)
+    action = parts[0]
+    target_user_id = int(parts[1])
 
     if action == "approve":
         try:
@@ -191,16 +166,24 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"موفق باشی! 🚀"
                 )
             )
-            await query.edit_message_caption(
-                caption=query.message.caption + "\n\n✅ تایید شد و لینک ارسال شد!",
-                reply_markup=None
-            ) if query.message.caption else await query.edit_message_text(
-                text=query.message.text + "\n\n✅ تایید شد و لینک ارسال شد!",
-                reply_markup=None
-            )
+            # آپدیت پیام ادمین
+            try:
+                if query.message.photo:
+                    await query.edit_message_caption(
+                        caption=(query.message.caption or "") + "\n\n✅ تایید شد!",
+                        reply_markup=None
+                    )
+                else:
+                    await query.edit_message_text(
+                        text=(query.message.text or "") + "\n\n✅ تایید شد!",
+                        reply_markup=None
+                    )
+            except:
+                pass
+
         except Exception as e:
             logger.error(f"Approve error: {e}")
-            await query.answer("❌ خطا در ارسال لینک!", show_alert=True)
+            await context.bot.send_message(chat_id=ADMIN_ID, text=f"❌ خطا در تایید: {e}")
 
     elif action == "reject":
         try:
@@ -214,29 +197,29 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     "دوباره امتحان کن: /start"
                 )
             )
-            await query.edit_message_caption(
-                caption=query.message.caption + "\n\n❌ رد شد.",
-                reply_markup=None
-            ) if query.message.caption else await query.edit_message_text(
-                text=query.message.text + "\n\n❌ رد شد.",
-                reply_markup=None
-            )
+            try:
+                if query.message.photo:
+                    await query.edit_message_caption(
+                        caption=(query.message.caption or "") + "\n\n❌ رد شد.",
+                        reply_markup=None
+                    )
+                else:
+                    await query.edit_message_text(
+                        text=(query.message.text or "") + "\n\n❌ رد شد.",
+                        reply_markup=None
+                    )
+            except:
+                pass
+
         except Exception as e:
             logger.error(f"Reject error: {e}")
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "❌ عملیات لغو شد.\n\nبرای شروع مجدد /start بزن."
-    )
+    await update.message.reply_text("❌ عملیات لغو شد.\n\nبرای شروع مجدد /start بزن.")
     return ConversationHandler.END
 
 
-async def get_my_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(f"🆔 آیدی شما: `{update.effective_user.id}`", parse_mode="Markdown")
-
-
-# ========== اجرا ==========
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
 
@@ -259,7 +242,6 @@ def main():
 
     app.add_handler(conv_handler)
     app.add_handler(CallbackQueryHandler(admin_callback, pattern="^(approve|reject)_"))
-    app.add_handler(CommandHandler("myid", get_my_id))
 
     logger.info("✅ TRADEMANVIP Bot started!")
     app.run_polling(drop_pending_updates=True)
