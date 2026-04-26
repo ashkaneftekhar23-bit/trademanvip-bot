@@ -11,7 +11,7 @@ BOT_TOKEN = "8647319022:AAEy5L1A9g2vGp0gFlXW0FDqrvQAdfG_vR0"
 CHANNEL_ID = -1002180889746
 REFERRAL_LINK = "https://www.lbank.com/en-US/login/?icode=TRADELAND"
 ADMIN_ID = int(os.environ.get("ADMIN_ID", "7274125873"))
-INVITE_LINK = "https://t.me/+xM84o_i6j-pmODkx"
+INVITE_LINK = "https://t.me/+BLcOh-oRGtI3ZGJk"
 
 WAITING_PROOF = 1
 
@@ -76,11 +76,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         f"👋 سلام {user.first_name}!\n\n"
-        f"🎯 به ربات TRADEMANVIP خوش آمدید!\n\n"
+        f"🎯 به ربات ‎TRADEMANVIP‎ خوش آمدید!\n\n"
         f"━━━━━━━━━━━━━━━━━━\n"
-        f"برای عضویت در کانال VIP:\n\n"
+        f"برای عضویت در کانال ‎VIP:\n\n"
         f"1️⃣ روی دکمه زیر کلیک کن\n"
-        f"2️⃣ در صرافی LBank ثبت‌نام کن\n"
+        f"2️⃣ در صرافی ‎LBank‎ ثبت‌نام کن\n"
         f"3️⃣ برگرد و دکمه تایید رو بزن\n"
         f"━━━━━━━━━━━━━━━━━━\n\n"
         f"⚠️ حتماً از لینک زیر ثبت‌نام کن!",
