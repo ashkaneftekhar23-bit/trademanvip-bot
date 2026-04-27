@@ -139,7 +139,7 @@ async def verify_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("✅ شما قبلاً عضو کانال هستید!")
         return ConversationHandler.END
 
-    await query.edit_message_text(
+    await query.message.reply_text(
         "📤 لطفاً بعد از ثبت‌نام، کد شناسه (UID) حساب کاربری خود را برای ما بفرستید\n\n"
         "📌 مطابق تصویر زیر، UID خود را پیدا و ارسال کنید"
     )
