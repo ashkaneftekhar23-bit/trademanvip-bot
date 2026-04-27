@@ -82,6 +82,21 @@ async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [InlineKeyboardButton("🌐 ashkaneftekhar.com", url="https://ashkaneftekhar.com")]
             ])
         )
+    elif text == "📊 چارت‌ها":
+        if not await is_member(context.bot, update.effective_user.id):
+            await update.message.reply_text(
+                "⛔️ برای استفاده از این قابلیت ابتدا باید ثبت‌نام کنید!\n\n"
+                "روی دکمه 📝 ثبت‌نام بزنید."
+            )
+            return
+        await update.message.reply_text(
+            "📊 چارت مورد نظر را انتخاب کنید:",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔶 BTC/USDT", url="https://www.tradingview.com/chart/?symbol=BYBIT:BTCUSDT.P")],
+                [InlineKeyboardButton("🥇 طلا (XAU/USD)", url="https://www.tradingview.com/chart/?symbol=XAUUSD")],
+                [InlineKeyboardButton("📈 Total3", url="https://www.tradingview.com/chart/?symbol=TOTAL3")]
+            ])
+        )
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -89,7 +104,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     reply_keyboard = ReplyKeyboardMarkup([
         [KeyboardButton("📝 ثبت‌نام")],
-        [KeyboardButton("💬 پشتیبانی"), KeyboardButton("🌐 سایت")]
+        [KeyboardButton("💬 پشتیبانی"), KeyboardButton("🌐 سایت")],
+        [KeyboardButton("📊 چارت‌ها")]
     ], resize_keyboard=True)
 
     if await is_member(context.bot, user.id):
@@ -151,7 +167,7 @@ async def handle_proof(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message
     sent = False
 
-    if msg.text in ["📝 ثبت‌نام", "💬 پشتیبانی", "🌐 سایت"]:
+    if msg.text in ["📝 ثبت‌نام", "💬 پشتیبانی", "🌐 سایت", "📊 چارت‌ها"]:
         await handle_menu(update, context)
         return ConversationHandler.END
 
@@ -302,7 +318,7 @@ def main():
     )
 
     app.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND & filters.Regex("^(📝 ثبت‌نام|💬 پشتیبانی|🌐 سایت)$"),
+        filters.TEXT & ~filters.COMMAND & filters.Regex("^(📝 ثبت‌نام|💬 پشتیبانی|🌐 سایت|📊 چارت‌ها)$"),
         handle_menu
     ))
     app.add_handler(conv_handler)
