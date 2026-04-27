@@ -1,6 +1,6 @@
 import os
 import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 from telegram.ext import (
     Application, CommandHandler, MessageHandler,
     CallbackQueryHandler, ContextTypes, filters, ConversationHandler
@@ -73,6 +73,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return ConversationHandler.END
 
+    # Reply Keyboard - دکمه‌های پایین صفحه
+    reply_keyboard = ReplyKeyboardMarkup([
+        [KeyboardButton("📝 ثبت‌نام")],
+        [KeyboardButton("💬 پشتیبانی"), KeyboardButton("🌐 سایت")]
+    ], resize_keyboard=True)
+
     keyboard = [
         [InlineKeyboardButton(f"📝 ثبت‌نام در LBank", url=REFERRAL_LINK)],
         [InlineKeyboardButton("✅ ثبت‌نام کردم!", callback_data="verify")]
@@ -96,6 +102,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"💎 بعد از تایید، لینک کانال {LTR}TradeMan برای شما ارسال می‌شود!",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
+
+    # ارسال Reply Keyboard
+    await update.message.reply_text(
+        "از منوی زیر انتخاب کنید:",
+        reply_markup=reply_keyboard
+    )
     return ConversationHandler.END
 
 
@@ -114,6 +126,27 @@ async def verify_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🚨 UID: شناسه حساب خود را بفرستید"
     )
     return WAITING_PROOF
+
+
+async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+
+    if text == "📝 ثبت‌نام":
+        await start(update, context)
+    elif text == "💬 پشتیبانی":
+        await update.message.reply_text(
+            "💬 برای ارتباط با پشتیبانی روی لینک زیر کلیک کنید:",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("💬 پشتیبانی", url="tg://user?id=7274125873")]
+            ])
+        )
+    elif text == "🌐 سایت":
+        await update.message.reply_text(
+            "🌐 وب‌سایت ما:",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🌐 ashkaneftekhar.com", url="https://ashkaneftekhar.com")]
+            ])
+        )
 
 
 async def handle_proof(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -255,6 +288,7 @@ def main():
     )
 
     app.add_handler(conv_handler)
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND & filters.Regex("^(📝 ثبت‌نام|💬 پشتیبانی|🌐 سایت)$"), handle_menu))
     app.add_handler(CallbackQueryHandler(admin_callback, pattern="^(approve|reject)_"))
     app.add_handler(CallbackQueryHandler(restart_handler, pattern="^restart$"))
 
