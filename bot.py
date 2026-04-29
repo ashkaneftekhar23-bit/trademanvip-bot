@@ -1,3 +1,4 @@
+
 import os
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
@@ -72,14 +73,16 @@ async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "💬 برای ارتباط با پشتیبانی:",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("💬 پشتیبانی", url="tg://user?id=7274125873")]
+                [InlineKeyboardButton("💬 پشتیبانی", url="tg://user?id=7274125873")],
+                [InlineKeyboardButton("🔙 بازگشت", callback_data="go_back")]
             ])
         )
     elif text == "🌐 سایت":
         await update.message.reply_text(
             "🌐 وب‌سایت ما:",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🌐 ashkaneftekhar.com", url="https://ashkaneftekhar.com")]
+                [InlineKeyboardButton("🌐 ashkaneftekhar.com", url="https://ashkaneftekhar.com")],
+                [InlineKeyboardButton("🔙 بازگشت", callback_data="go_back")]
             ])
         )
     elif text == "📊 چارت‌ها":
@@ -94,7 +97,8 @@ async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("🔶 BTC/USDT", url="https://www.tradingview.com/chart/?symbol=BYBIT:BTCUSDT.P")],
                 [InlineKeyboardButton("🥇 طلا (XAU/USD)", url="https://www.tradingview.com/chart/?symbol=XAUUSD")],
-                [InlineKeyboardButton("📈 Total3", url="https://www.tradingview.com/chart/?symbol=TOTAL3")]
+                [InlineKeyboardButton("📈 Total3", url="https://www.tradingview.com/chart/?symbol=TOTAL3")],
+                [InlineKeyboardButton("🔙 بازگشت", callback_data="go_back")]
             ])
         )
 
@@ -288,6 +292,12 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             pass
 
 
+async def go_back_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await start(update, context)
+
+
 async def get_file_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
         return
@@ -328,6 +338,7 @@ def main():
         handle_menu
     ))
     app.add_handler(conv_handler)
+    app.add_handler(CallbackQueryHandler(go_back_handler, pattern="^go_back$"))
     app.add_handler(CallbackQueryHandler(admin_callback, pattern="^(approve|reject)_"))
     app.add_handler(CommandHandler("getid", get_file_id))
 
