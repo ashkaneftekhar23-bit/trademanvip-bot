@@ -155,9 +155,12 @@ async def verify_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("✅ شما قبلاً عضو کانال هستید!")
         return ConversationHandler.END
 
-    await query.message.reply_text(
-        "📤 لطفاً بعد از ثبت‌نام، کد شناسه (UID) حساب کاربری خود را برای ما بفرستید\n\n"
-        "📌 مطابق تصویر زیر، UID خود را پیدا و ارسال کنید"
+    await query.message.reply_photo(
+        photo="https://ashkaneftekhar.com/uid-sample.jpg",
+        caption=(
+            "📤 لطفاً بعد از ثبت‌نام، کد شناسه (UID) حساب کاربری خود را برای ما بفرستید\n\n"
+            "📌 مطابق تصویر بالا، UID خود را پیدا و ارسال کنید"
+        )
     )
     return WAITING_PROOF
 
@@ -323,7 +326,7 @@ def main():
     ))
     app.add_handler(conv_handler)
     app.add_handler(CallbackQueryHandler(admin_callback, pattern="^(approve|reject)_"))
-    app.add_handler(MessageHandler((filters.PHOTO | filters.Document.ALL) & filters.User(ADMIN_ID), get_file_id))
+    app.add_handler(CommandHandler("getid", get_file_id))
 
     logger.info("TRADEMANVIP Bot started!")
     app.run_polling(drop_pending_updates=True)
