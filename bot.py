@@ -323,7 +323,7 @@ def main():
     ))
     app.add_handler(conv_handler)
     app.add_handler(CallbackQueryHandler(admin_callback, pattern="^(approve|reject)_"))
-    app.add_handler(MessageHandler(filters.PHOTO & filters.User(ADMIN_ID), get_file_id))
+    app.add_handler(MessageHandler((filters.PHOTO | filters.Document.ALL) & filters.User(ADMIN_ID), get_file_id))
 
     logger.info("TRADEMANVIP Bot started!")
     app.run_polling(drop_pending_updates=True)
