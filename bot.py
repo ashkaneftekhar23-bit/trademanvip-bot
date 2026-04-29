@@ -155,8 +155,11 @@ async def verify_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("✅ شما قبلاً عضو کانال هستید!")
         return ConversationHandler.END
 
+    import io, base64
+    with open("/app/uid_sample.png", "rb") as f:
+        photo_bytes = f.read()
     await query.message.reply_photo(
-        photo="https://ashkaneftekhar.com/uid-sample.jpg",
+        photo=io.BytesIO(photo_bytes),
         caption=(
             "📤 لطفاً بعد از ثبت‌نام، کد شناسه (UID) حساب کاربری خود را برای ما بفرستید\n\n"
             "📌 مطابق تصویر بالا، UID خود را پیدا و ارسال کنید"
