@@ -362,7 +362,7 @@ def main():
 
     app.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND & filters.Regex(
-            "^(\U0001f4dd \u062b\u0628\u062a\u200c\u0646\u0627\u0645|\U0001f4ac \u067e\u0634\u062a\u06cc\u0628\u0627\u0646\u06cc|\U0001f310 \u0633\u0627\u06cc\u062a|\U0001f4ca \u0686\u0627\u0631\u062a\u200c\u0647\u0627)$"
+            "^(\U0001f4dd \u062b\u0628\u062a\u200c\u0646\u0627\u0645|\U0001f4ac \u067e\u0634\u062a\u06cc\u0628\u0627\u0646\u06cc|\U0001f310 \u0633\u0627\u06cc\u062a|\U0001f4ca \u0686\u0627\u0631\u062a\u200c\u0647\u0627|\U0001f393 \u062f\u0648\u0631\u0647 TCB \u0631\u0627\u06cc\u06af\u0627\u0646)$"
         ),
         handle_menu
     ))
