@@ -24,7 +24,7 @@ def get_main_keyboard():
     return ReplyKeyboardMarkup([
         [KeyboardButton("\U0001f4dd \u062b\u0628\u062a\u200c\u0646\u0627\u0645")],
         [KeyboardButton("\U0001f4ac \u067e\u0634\u062a\u06cc\u0628\u0627\u0646\u06cc"), KeyboardButton("\U0001f310 \u0633\u0627\u06cc\u062a")],
-        [KeyboardButton("\U0001f4ca \u0686\u0627\u0631\u062a\u200c\u0647\u0627")]
+        [KeyboardButton("\U0001f4ca \u0686\u0627\u0631\u062a\u200c\u0647\u0627"), KeyboardButton("\U0001f393 \u062f\u0648\u0631\u0647 TCB")]
     ], resize_keyboard=True)
 
 
@@ -107,6 +107,14 @@ async def handle_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "\U0001f310 \u0648\u0628\u200c\u0633\u0627\u06cc\u062a \u0645\u0627:",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("\U0001f310 ashkaneftekhar.com", url="https://ashkaneftekhar.com")],
+                [InlineKeyboardButton("\U0001f519 \u0628\u0627\u0632\u06af\u0634\u062a", callback_data="go_back")]
+            ])
+        )
+    elif text == "\U0001f393 \u062f\u0648\u0631\u0647 TCB":
+        await update.message.reply_text(
+            "\U0001f393 \u062f\u0648\u0631\u0647 \u0622\u0645\u0648\u0632\u0634\u06cc TCB \u0631\u0627\u06cc\u06af\u0627\u0646:",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("\U0001f4fa \u0645\u0634\u0627\u0647\u062f\u0647 \u062f\u0648\u0631\u0647 TCB", url="https://youtube.com/playlist?list=PLGhV--putKvKDXbR-x5UFd2dccBirQBUg&si=5GVhbWNBd2tplQsA")],
                 [InlineKeyboardButton("\U0001f519 \u0628\u0627\u0632\u06af\u0634\u062a", callback_data="go_back")]
             ])
         )
@@ -203,7 +211,8 @@ async def handle_proof(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "\U0001f4dd \u062b\u0628\u062a\u200c\u0646\u0627\u0645",
         "\U0001f4ac \u067e\u0634\u062a\u06cc\u0628\u0627\u0646\u06cc",
         "\U0001f310 \u0633\u0627\u06cc\u062a",
-        "\U0001f4ca \u0686\u0627\u0631\u062a\u200c\u0647\u0627"
+        "\U0001f4ca \u0686\u0627\u0631\u062a\u200c\u0647\u0627",
+        "\U0001f393 \u062f\u0648\u0631\u0647 TCB"
     ]
 
     if msg.text in menu_items:
